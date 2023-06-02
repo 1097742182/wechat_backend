@@ -25,7 +25,9 @@ def upload(request):
 
         return restful.result(data=data)
 
+
 # 获取用户信息
+@csrf_exempt
 def get_user(request):
     username = request.POST.get('username', '')
     openId = request.POST.get('openId', '')
@@ -111,6 +113,7 @@ def update_UserCount(request):
         # 处理找到的用户
         if user:
             user.UserCount = UserCount
+            user.save()
             return restful.result(message="用户积分修改成功")
         else:
             return restful.params_error(message="用户不存在")

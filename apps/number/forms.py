@@ -19,6 +19,12 @@ class UserForm(forms.ModelForm):
             raise forms.ValidationError('OpenID is required')
         return openId
 
+    def clean(self):
+        nickname = self.cleaned_data.get('nickname')
+        if not nickname :
+            raise forms.ValidationError('nickname is required')
+        return self.cleaned_data
+
 
 # forms.py
 class UpdateUserForm(forms.ModelForm):
@@ -34,7 +40,7 @@ class UpdateUserCountForm(forms.Form):
     username = forms.CharField(max_length=200, required=False, error_messages={"max_length": '字符段不符合要求！'})
     openId = forms.CharField(max_length=200, required=False, error_messages={"max_length": '字符段不符合要求！'})
     UserCount = forms.IntegerField()
-    
+
     def clean_UserCount(self):
         count = self.cleaned_data['UserCount']
         if count <= 0:
