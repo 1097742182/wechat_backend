@@ -21,6 +21,10 @@ class UserForm(forms.ModelForm):
 
 
 # forms.py
-class UpdateUserForm(forms.Form):
+class UpdateUserForm(forms.ModelForm):
     username = forms.CharField(max_length=200, error_messages={"max_length": '字符段不符合要求！'})
     openId = forms.CharField(max_length=200, error_messages={"max_length": '字符段不符合要求！'})
+
+    class Meta:
+        model = User
+        exclude = ["username", "openId"]
