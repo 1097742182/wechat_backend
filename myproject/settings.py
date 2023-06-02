@@ -24,7 +24,7 @@ SECRET_KEY = 'j5cb_#1d#71+d0py7!fiufqwcaxg8^+i1g=8^88!x8iepb7@8%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "game.xinyongji.com", "xinyongji.com"]
+ALLOWED_HOSTS = ["127.0.0.1", "game.xinyongji.com", "xinyongji.com", "www.xinyongji.com", "localhost"]
 
 # Application definition
 
