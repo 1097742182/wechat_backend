@@ -24,7 +24,8 @@ SECRET_KEY = 'j5cb_#1d#71+d0py7!fiufqwcaxg8^+i1g=8^88!x8iepb7@8%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "game.xinyongji.com", "xinyongji.com", "www.xinyongji.com", "localhost"]
+# ALLOWED_HOSTS = ["127.0.0.1", "game.xinyongji.com", "xinyongji.com", "www.xinyongji.com", "localhost"]
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -35,12 +36,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',  # 解决跨域
     "apps.number"
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware',  # 解决跨域
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -121,3 +125,33 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+CORS_ALLOW_CREDENTIALS = True  # 解决跨域
+CORS_ORIGIN_ALLOW_ALL = True  # 解决跨域
+# 允许任何表头
+CORS_ALLOW_HEADERS = ("*")  # 解决跨域
+
+# 允许的标头
+# CORS_ALLOW_HEADERS = (
+#     'accept',
+#     'accept-encoding',
+#     'authorization',
+#     'content-type',
+#     'dnt',
+#     'origin',
+#     'user-agent',
+#     'x-csrftoken',
+#     'x-requested-with',
+# )
+
+# 设置白名单
+CORS_ORIGIN_WHITELIST = ()
+# 对应的发送的请求的跨域
+CORS_ALLOW_METHODS = (
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+    'VIEW',
+)
