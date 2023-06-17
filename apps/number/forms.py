@@ -21,19 +21,18 @@ class UserForm(forms.ModelForm):
 
     def clean(self):
         nickname = self.cleaned_data.get('nickname')
-        if not nickname :
+        if not nickname:
             raise forms.ValidationError('nickname is required')
         return self.cleaned_data
 
 
 # forms.py
 class UpdateUserForm(forms.ModelForm):
-    nickname = forms.CharField(max_length=200, error_messages={"max_length": '字符段不符合要求！'})
     openId = forms.CharField(max_length=200, error_messages={"max_length": '字符段不符合要求！'})
 
     class Meta:
         model = User
-        exclude = ["nickname", "openId"]
+        exclude = ["openId"]
 
 
 class UpdateUserCountForm(forms.Form):

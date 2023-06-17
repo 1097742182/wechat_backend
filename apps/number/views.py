@@ -81,8 +81,7 @@ def _get_user_info_by_wx_url(openid):
 
 @csrf_exempt
 def get_user_info(request):
-    data = json.loads(request.body)
-    code = data.get('code')
+    code = request.POST.get('code')
 
     # 根据wx.login获取的临时code，获取openid
     wx_response = get_wx_openid(code)
