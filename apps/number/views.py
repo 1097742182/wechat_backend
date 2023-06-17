@@ -97,6 +97,9 @@ def get_user_info(request):
     if not user_info:
         user_info = {"nickname": "微信用户", "openid": openid, "isNewData": True}
 
+        # 如果没有找到user_info，但是有openid，说明是新用户，则保存数据到数据库中
+        User.objects.create(openId=openid).save() if openid else None
+
     return restful.result(data=user_info)
 
 
