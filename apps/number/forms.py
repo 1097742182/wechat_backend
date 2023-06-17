@@ -7,11 +7,11 @@ class UserForm(forms.ModelForm):
         model = User
         exclude = []
 
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if not username:
-            raise forms.ValidationError('Username is required')
-        return username
+    def clean_nickname(self):
+        nickname = self.cleaned_data.get('nickname')
+        if not nickname:
+            raise forms.ValidationError('nickname is required')
+        return nickname
 
     def clean_openId(self):
         openId = self.cleaned_data.get('openId')
@@ -28,16 +28,16 @@ class UserForm(forms.ModelForm):
 
 # forms.py
 class UpdateUserForm(forms.ModelForm):
-    username = forms.CharField(max_length=200, error_messages={"max_length": '字符段不符合要求！'})
+    nickname = forms.CharField(max_length=200, error_messages={"max_length": '字符段不符合要求！'})
     openId = forms.CharField(max_length=200, error_messages={"max_length": '字符段不符合要求！'})
 
     class Meta:
         model = User
-        exclude = ["username", "openId"]
+        exclude = ["nickname", "openId"]
 
 
 class UpdateUserCountForm(forms.Form):
-    username = forms.CharField(max_length=200, required=False, error_messages={"max_length": '字符段不符合要求！'})
+    nickname = forms.CharField(max_length=200, required=False, error_messages={"max_length": '字符段不符合要求！'})
     openId = forms.CharField(max_length=200, required=False, error_messages={"max_length": '字符段不符合要求！'})
     UserCount = forms.IntegerField()
 
@@ -48,8 +48,8 @@ class UpdateUserCountForm(forms.Form):
         return count
 
     def clean(self):
-        username = self.cleaned_data.get('username')
+        nickname = self.cleaned_data.get('nickname')
         openId = self.cleaned_data.get('openId')
-        if not username and not openId:
+        if not nickname and not openId:
             raise forms.ValidationError('请至少使用昵称或openId中的一个来注册。')
         return self.cleaned_data

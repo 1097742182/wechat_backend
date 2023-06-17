@@ -95,25 +95,9 @@ def get_user_info(request):
     # 如果openid不为空，则执行
     user_info = User.objects.filter(openId=openid).values().first() if openid else None
     if not user_info:
-        user_info = {"username": "微信用户", "nickname": "微信用户", "openid": openid, "isNewData": True}
+        user_info = {"nickname": "微信用户", "openid": openid, "isNewData": True}
 
     return restful.result(data=user_info)
-
-
-# 获取用户信息
-@csrf_exempt
-def get_user(request):
-    username = request.POST.get('username', '')
-    openId = request.POST.get('openId', '')
-    if username:
-        user = User.objects.filter(username=username).values().first()
-    elif openId:
-        user = User.objects.filter(openId=openId).values().first()
-    else:
-        return JsonResponse({'error': '参数错误'})
-    if user:
-        return JsonResponse(user, safe=False)
-    return JsonResponse({'error': '未查询到用户'})
 
 
 # 添加数据
@@ -125,14 +109,9 @@ def add_data(request):
         # user.genderValue = "男女"
         user.save()
         response_data = {
-            'status': 'success',
-            'message': 'User updated successfully',
-            'user': {
-                'username': user.username,
-                "openId": user.openId,
-                'nickname': user.nickname,
-                'avatarUrl': user.avatarUrl,
-            }
+            "openId": user.openId,
+            'nickname': user.nickname,
+            'avatarUrl': user.avatarUrl,
         }
         return restful.result(data=response_data)
 
@@ -149,10 +128,10 @@ def add_data(request):
 def update_data(request):
     form = UpdateUserForm(request.POST)
     if form.is_valid():
-        username = form.cleaned_data.get('username')
-        if username:
+        openId = form.cleaned_data.get('openId')
+        if openId:
             try:
-                user = User.objects.get(username=username)
+                user = User.objects.get(openId=openId)
                 user_fields = [f.name for f in User._meta.get_fields()]  # 获取User模型的所有字段
                 for field in user_fields:
                     value = request.POST.get(field)
@@ -175,14 +154,14 @@ def update_data(request):
 def update_UserCount(request):
     form = UpdateUserCountForm(request.POST)
     if form.is_valid():
-        username = form.cleaned_data.get('username')
+        nickname = form.cleaned_data.get('nickname')
         openId = form.cleaned_data.get('openId')
         UserCount = form.cleaned_data.get('UserCount')
         user = None
         if openId:
             user = User.objects.filter(openId=openId).first()
-        elif username:
-            user = User.objects.filter(username=username).first()
+        elif nickname:
+            user = User.objects.filter(nickname=nickname).first()
 
         # 处理找到的用户
         if user:
