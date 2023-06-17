@@ -95,7 +95,7 @@ def get_user_info(request):
     # 如果openid不为空，则执行
     user_info = User.objects.filter(openId=openid).values().first() if openid else None
     if not user_info:
-        user_info = {"username": "微信用户", "openid": openid, isNewData: True}
+        user_info = {"username": "微信用户", "nickname": "微信用户", "openid": openid, "isNewData": True}
 
     return restful.result(data=user_info)
 
