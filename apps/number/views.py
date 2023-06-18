@@ -94,7 +94,7 @@ def get_user_info(request):
     # 如果openid不为空，则执行
     user_info = User.objects.filter(openId=openid).values().first() if openid else None
     if not user_info:
-        user_info = {"nickname": "", "openid": openid, "isNewData": True}
+        user_info = {"nickname": "", "openId": openid, "isNewData": True}
 
         # 如果没有找到user_info，但是有openid，说明是新用户，则保存数据到数据库中
         User.objects.create(openId=openid).save() if openid else None
