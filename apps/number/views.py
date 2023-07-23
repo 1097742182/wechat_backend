@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.core.files.storage import FileSystemStorage
 from .forms import UserForm, UpdateUserForm, UpdateUserCountForm
-from .models import User
+from .models import User, UserPkHistory
 from utils import restful
 from django.views.decorators.csrf import csrf_exempt
 import requests
@@ -82,17 +82,30 @@ def _get_user_info_by_wx_url(openid):
 @csrf_exempt
 def get_user_info(request):
     code = request.POST.get('code')
+    openid = request.POST.get('openid')
 
-    # 根据wx.login获取的临时code，获取openid
-    wx_response = get_wx_openid(code)
-    openid = wx_response.get("openid")
+    if not openid:
+        # 根据wx.login获取的临时code，获取openid
+        wx_response = get_wx_openid(code)
+        openid = wx_response.get("openid")
+
     print("openid", openid)
 
     # 根据返回的openid，获取用户信息（接口暂时不可用，不知道为什么用不了）
     # user_info = _get_user_info_by_wx_url(openid)
 
     # 如果openid不为空，则执行
-    user_info = User.objects.filter(openId=openid).values().first() if openid else None
+    if openid:
+        user_info = User.objects.filter(openId=openid).values().first()
+        user_pk_history = UserPkHistory.objects.filter(openId=openid).values().first()
+
+        if user_pk_history:
+            user_info.update(user_pk_history)
+
+    else:
+        user_info = None
+
+    # 如果没有找到user_info，则赋予默认值进行返回
     if not user_info:
         user_info = {"nickname": "", "openId": openid, "isNewData": True}
 
@@ -176,3 +189,26 @@ def update_UserCount(request):
         message = "数据传参有误"
         response_data = {'errors': form.errors}
         return restful.params_error(message=message, data=response_data)
+
+
+# 更新PK历史数据
+@csrf_exempt
+def update_user_pk_history(request):
+    openId = request.POST.get('openId')
+    UserGameDetail = request.POST.get('UserGameDetail')
+    PkHistoryList = request.POST.get('PkHistoryList')
+
+    if not openId:
+        return restful.params_error(message='openid不可为空')
+
+    user_pk_history = UserPkHistory.objects.filter(openId=openId).first()
+    # 如果查询到用户，则开始修改数据
+    if user_pk_history:
+        if UserGameDetail:  # 如果有传入UserGameDetail
+            user_pk_history.UserGameDetail = UserGameDetail
+        if PkHistoryList:  # 如果有传入PkHistoryList
+            user_pk_history.PkHistoryList = PkHistoryList
+
+        user_pk_history.save()
+
+    return restful.result(message="用户PK数据修改成功")

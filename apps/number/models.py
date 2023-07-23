@@ -11,6 +11,14 @@ class User(models.Model):
     LevelStep = models.CharField(max_length=200, default="", null=True, blank=True)  # 用户关卡
     cityValue = models.CharField(max_length=200, default="", null=True, blank=True)  # 用户关卡
     genderValue = models.CharField(max_length=200, default="", null=True, blank=True)  # 用户关卡
+    objects = models.Manager()  # 的管理器
 
     def __str__(self):
         return self.nickname
+
+
+class UserPkHistory(models.Model):
+    openId = models.CharField(max_length=200, unique=True)
+    UserGameDetail = models.CharField(max_length=200)
+    PkHistoryList = models.TextField(blank=True, null=True)
+    objects = models.Manager()  # 的管理器
