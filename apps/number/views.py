@@ -208,9 +208,9 @@ def update_user_pk_history(request):
     # 如果查询到用户，则开始修改数据
     if user_pk_history:
         if UserGameDetail:  # 如果有传入UserGameDetail
-            user_pk_history.UserGameDetail = UserGameDetail
+            user_pk_history.UserGameDetail = str(UserGameDetail)
         if PkHistoryList:  # 如果有传入PkHistoryList
-            user_pk_history.PkHistoryList = PkHistoryList
+            user_pk_history.PkHistoryList = str(PkHistoryList)
 
         user_pk_history.save()
 
