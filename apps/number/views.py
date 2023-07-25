@@ -9,6 +9,9 @@ import requests
 import json
 from django.core.cache import cache
 
+import redis
+import random
+
 appid = "wx9e48b38eda513483"
 secret = "7c01f44918662846de2e11217cadbc91"
 
@@ -212,3 +215,99 @@ def update_user_pk_history(request):
         user_pk_history.save()
 
     return restful.result(message="用户PK数据修改成功")
+
+
+r = redis.Redis(host="127.0.0.1", port=6379)
+
+
+@csrf_exempt
+def createRoom(request):
+    firstUser = request.POST.get("username")
+    firstOpenId = request.POST.get("openId")
+
+    if firstUser is None or firstOpenId is None:
+        return restful.params_error(message="信息有误，请确认用户信息")
+
+    roomId = str(random.random())
+    roomId = roomId.split(".")[1]
+
+    # 存放数据
+    room_detail = {"firstUser": firstUser, "firstOpenId": firstOpenId}
+    room_detail = str(room_detail)
+
+    # 将数据存放到Redis中
+    room_id = "room_id_" + roomId
+    r.set(room_id, room_detail)
+
+    return restful.result(message="创建房间成功", data={"roomId": roomId})
+
+
+@csrf_exempt
+def getRoomDetail(request):
+    roomId = request.POST.get("roomId")
+    room_id = "room_id_" + roomId
+    room_detail = r.get(room_id)
+    room_detail = eval(room_detail)
+
+    return restful.result(data=room_detail)
+
+
+@csrf_exempt
+def searchRoom(request):
+    roomId = request.POST.get("roomId")
+    username = request.POST.get("username")
+    openId = request.POST.get("openId")
+
+    # 获取对应roomId的信息
+    room_id = "room_id_" + roomId
+    room_detail = r.get(room_id)
+    if not room_detail:  # 如果没有找到房间号
+        return restful.params_error(message="房间ID号不存在")
+
+    # 判断是否已经有secondUser，如果有，则直接返回
+    room_detail = eval(room_detail)
+    if room_detail.get("secondUser"):
+        return restful.params_error(message="房间对战已开始，请重新创建房间")
+
+    # 丰富返回信息
+    room_detail["room_id"] = roomId
+    room_detail["secondUser"] = username
+    room_detail["secondOpenId"] = openId
+    room_detail["secondStep"] = 0
+    room_detail["firstStep"] = 0
+    room_detail["firstUserStatus"] = False
+    room_detail["secondUserStatus"] = 0
+    room_detail["gameStatus"] = "loading"
+
+    r.set(room_id, str(room_detail))
+    return restful.result(message="进入房间成功", data=room_detail)
+
+
+@csrf_exempt
+def updateRoomDetail(request):
+    openId = request.POST.get("openId")
+    userStep = request.POST.get("userStep")
+    userUseTime = request.POST.get("userUseTime")
+    roomId = request.POST.get("roomId")
+
+    # 获取对应roomId的信息
+    room_id = "room_id_" + roomId
+    room_detail = r.get(room_id)
+    if not room_detail:
+        return restful.params_error(message="获取房间异常，更新数据失败")
+
+    room_detail = eval(room_detail)
+    firstOpenId = room_detail.get("firstOpenId")
+    secondOpenId = room_detail.get("secondOpenId")
+
+    # 判断是否为第一个openId
+    if openId == firstOpenId:
+        room_detail['firstStep'] = userStep
+        room_detail['firstUseTime'] = userUseTime
+    # 判断是否为第二个openId
+    elif openId == secondOpenId:
+        room_detail['secondStep'] = userStep
+        room_detail['secondUseTime'] = userUseTime
+
+    r.set(room_id, str(room_detail))
+    return restful.result(message="更新数据成功", data=room_detail)

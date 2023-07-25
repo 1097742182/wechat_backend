@@ -11,4 +11,8 @@ urlpatterns = [
     path('update_UserCount', views.update_UserCount, name='update_UserCount'),
 
     path('update_user_pk_history', views.update_user_pk_history, name='update_user_pk_history'),
+    path('createRoom', views.createRoom, name='createRoom'),
+    path('getRoomDetail', views.getRoomDetail, name='getRoomDetail'),
+    path('searchRoom', views.searchRoom, name='searchRoom'),
+    path('updateRoomDetail', views.updateRoomDetail, name='updateRoomDetail'),
 ]
