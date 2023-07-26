@@ -237,7 +237,7 @@ def createRoom(request):
 
     # 将数据存放到Redis中
     room_id = "room_id_" + roomId
-    r.set(room_id, room_detail)
+    r.set(room_id, room_detail, ex=36000)
 
     return restful.result(message="创建房间成功", data={"roomId": roomId})
 
@@ -279,7 +279,7 @@ def searchRoom(request):
     room_detail["secondUserStatus"] = 0
     room_detail["gameStatus"] = "loading"
 
-    r.set(room_id, str(room_detail))
+    r.set(room_id, str(room_detail), ex=36000)
     return restful.result(message="进入房间成功", data=room_detail)
 
 
@@ -309,5 +309,17 @@ def updateRoomDetail(request):
         room_detail['secondStep'] = userStep
         room_detail['secondUseTime'] = userUseTime
 
-    r.set(room_id, str(room_detail))
+    r.set(room_id, str(room_detail), ex=36000)
     return restful.result(message="更新数据成功", data=room_detail)
+
+
+@csrf_exempt
+def deleteAllRoomIds(request):
+    # 找到所有包含 room_id_ 字段的键
+    keys = r.keys('room_id_*')
+
+    # 删除这些键
+    for key in keys:
+        r.delete(key)
+
+    return restful.result(message="删除所有key成功")

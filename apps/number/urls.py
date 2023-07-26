@@ -15,4 +15,5 @@ urlpatterns = [
     path('getRoomDetail', views.getRoomDetail, name='getRoomDetail'),
     path('searchRoom', views.searchRoom, name='searchRoom'),
     path('updateRoomDetail', views.updateRoomDetail, name='updateRoomDetail'),
+    path('deleteAllRoomIds', views.deleteAllRoomIds, name='deleteAllRoomIds'),
 ]
