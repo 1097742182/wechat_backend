@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
 from django.core.cache import cache
+import time
 
 import redis
 import random
@@ -271,7 +272,10 @@ def searchRoom(request):
     if room_detail.get("secondUser"):
         return restful.params_error(message="房间对战已开始，请重新创建房间")
 
+    t = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+
     # 丰富返回信息
+    room_detail["beginTime"] = t
     room_detail["roomId"] = roomId
     room_detail["secondUser"] = username
     room_detail["secondOpenId"] = openId
