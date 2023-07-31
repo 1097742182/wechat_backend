@@ -247,8 +247,10 @@ def getRoomDetail(request):
     roomId = request.POST.get("roomId")
     room_id = "room_id_" + roomId
     room_detail = r.get(room_id)
-    room_detail = eval(room_detail)
+    if not room_detail:
+        return restful.params_error(message="房间号有误！")
 
+    room_detail = eval(room_detail)
     return restful.result(data=room_detail)
 
 
@@ -270,7 +272,7 @@ def searchRoom(request):
         return restful.params_error(message="房间对战已开始，请重新创建房间")
 
     # 丰富返回信息
-    room_detail["room_id"] = roomId
+    room_detail["roomId"] = roomId
     room_detail["secondUser"] = username
     room_detail["secondOpenId"] = openId
     room_detail["secondStep"] = 0
