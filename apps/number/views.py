@@ -285,6 +285,9 @@ def searchRoom(request):
     room_detail["secondUserStatus"] = 0
     room_detail["gameStatus"] = "loading"
 
+    room_detail["firstReady"] = False
+    room_detail["secondReady"] = False
+
     r.set(room_id, str(room_detail), ex=604800)
     return restful.result(message="进入房间成功", data=room_detail)
 
