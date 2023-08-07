@@ -281,8 +281,6 @@ def searchRoom(request):
     room_detail["secondOpenId"] = openId
     room_detail["secondStep"] = 0
     room_detail["firstStep"] = 0
-    room_detail["firstUserStatus"] = False
-    room_detail["secondUserStatus"] = 0
     room_detail["gameStatus"] = "loading"
 
     room_detail["firstReady"] = False
@@ -303,7 +301,7 @@ def updateRoomDetail(request):
     room_id = "room_id_" + roomId
     room_detail = r.get(room_id)
     if not room_detail:
-        return restful.params_error(message="获取房间异常，更新数据失败")
+        return restful.params_error(message="")
 
     room_detail = eval(room_detail)
     firstOpenId = room_detail.get("firstOpenId")
