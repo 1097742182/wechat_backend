@@ -134,6 +134,10 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'media'),
+]
+
 CORS_ALLOW_CREDENTIALS = True  # 解决跨域
 CORS_ORIGIN_ALLOW_ALL = True  # 解决跨域
 # 允许任何表头
