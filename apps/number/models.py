@@ -22,3 +22,28 @@ class UserPkHistory(models.Model):
     UserGameDetail = models.CharField(max_length=200)
     PkHistoryList = models.TextField(blank=True, null=True)
     objects = models.Manager()  # 的管理器
+
+
+class GameHistory(models.Model):
+    id = models.AutoField(primary=True)
+    beginTime = models.DateTimeField()
+    roomId = models.IntegerField()
+
+    firstUser = models.CharField(max_length=255)
+    firstOpenId = models.CharField(max_length=255)
+    firstUseTime = models.CharField(max_length=255)
+    firstStep = models.SmallIntegerField()
+    firstReady = models.BooleanField(default=False)
+    firstGameStatus = models.BooleanField(default=False)
+
+    secondUser = models.CharField(max_length=255)
+    secondOpenId = models.CharField(max_length=255)
+    secondUseTime = models.CharField(max_length=255)
+    secondStep = models.SmallIntegerField()
+    secondReady = models.BooleanField(default=False)
+    secondGameStatus = models.BooleanField(default=False)
+
+    gameStatus = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = 'game_history'
