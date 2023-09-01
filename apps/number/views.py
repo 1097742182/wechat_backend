@@ -4,6 +4,9 @@ from django.core.files.storage import FileSystemStorage
 from .forms import UserForm, UpdateUserForm, UpdateUserCountForm
 from .models import User, UserPkHistory
 from utils import restful
+from django.db.models import Q, Count
+from django.db import models
+from django.db.models.functions import Cast
 from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
@@ -182,6 +185,15 @@ def update_UserCount(request):
         elif nickname:
             user = User.objects.filter(nickname=nickname).first()
 
+        # 给UserCount进行判断
+        if UserCount is None:
+            UserCount = 0
+        elif isinstance(UserCount, str):
+            try:
+                UserCount = int(UserCount)
+            except ValueError:
+                UserCount = 0
+
         # 处理找到的用户
         if user:
             user.UserCount = UserCount
@@ -330,3 +342,21 @@ def deleteAllRoomIds(request):
         r.delete(key)
 
     return restful.result(message="删除所有key成功")
+
+
+@csrf_exempt
+def get_rank(request):
+    open_id = request.POST.get("open_id")
+
+    user_count = User.objects.filter(openId=open_id).values_list('UserCount', flat=True).first()
+    print(user_count)
+
+    count = None
+    if user_count is not None:
+        # 获取大于 user_count 的数据条数
+        count = User.objects.filter(Q(UserCount__gt=user_count) | Q(UserCount=None)).count()
+        print(f"大于 {user_count} 的数据条数为：{count}")
+    else:
+        print("没有找到指定 open_id 的数据")
+
+    return JsonResponse({'rank': count + 1})
