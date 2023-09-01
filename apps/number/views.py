@@ -359,4 +359,6 @@ def get_rank(request):
     else:
         print("没有找到指定 open_id 的数据")
 
-    return JsonResponse({'rank': count + 1})
+    rank_detail = {'rank': count + 1}
+    return restful.result(message="获取数据成功", data=rank_detail)
+
