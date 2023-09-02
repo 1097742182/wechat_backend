@@ -379,15 +379,14 @@ def get_rank(request):
 @require_http_methods(["POST"])
 def get_top20_rank(request):
     top20_rank = User.objects.order_by('-UserCount')[:20]
-    data = {'top20_rank': []}
+    data = []
 
     for user_data in top20_rank.values():
-        print(user_data)
         obj = {
             "nickname": user_data['nickname'],
             "UserCount": user_data['UserCount'],
             "cityValue": user_data['cityValue'],
         }
-        data['top20_rank'].append(obj)
+        data.append(obj)
 
     return restful.result(message="获取数据成功", data=data)
