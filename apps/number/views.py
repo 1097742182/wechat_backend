@@ -8,6 +8,7 @@ from django.db.models import Q, Count
 from django.db import models
 from django.db.models.functions import Cast
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 import requests
 import json
 from django.core.cache import cache
@@ -87,6 +88,7 @@ def _get_user_info_by_wx_url(openid):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def get_user_info(request):
     code = request.POST.get('code')
     openid = request.POST.get('openid')
@@ -124,6 +126,7 @@ def get_user_info(request):
 
 # 添加数据
 @csrf_exempt
+@require_http_methods(["POST"])
 def add_data(request):
     form = UserForm(request.POST)
     if form.is_valid():
@@ -147,6 +150,7 @@ def add_data(request):
 
 # 更新数据
 @csrf_exempt
+@require_http_methods(["POST"])
 def update_data(request):
     form = UpdateUserForm(request.POST)
     if form.is_valid():
@@ -173,6 +177,7 @@ def update_data(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def update_UserCount(request):
     form = UpdateUserCountForm(request.POST)
     if form.is_valid():
@@ -209,6 +214,7 @@ def update_UserCount(request):
 
 # 更新PK历史数据
 @csrf_exempt
+@require_http_methods(["POST"])
 def update_user_pk_history(request):
     openId = request.POST.get('openId')
     UserGameDetail = request.POST.get('UserGameDetail')
@@ -234,6 +240,7 @@ r = redis.Redis(host="127.0.0.1", port=6379)
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def createRoom(request):
     firstUser = request.POST.get("username")
     firstOpenId = request.POST.get("openId")
@@ -256,6 +263,7 @@ def createRoom(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def getRoomDetail(request):
     roomId = request.POST.get("roomId")
     room_id = "room_id_" + roomId
@@ -268,6 +276,7 @@ def getRoomDetail(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def searchRoom(request):
     roomId = request.POST.get("roomId")
     username = request.POST.get("username")
@@ -303,6 +312,7 @@ def searchRoom(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def updateRoomDetail(request):
     openId = request.POST.get("openId")
     userStep = request.POST.get("userStep")
@@ -345,6 +355,7 @@ def deleteAllRoomIds(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def get_rank(request):
     open_id = request.POST.get("open_id")
 
@@ -363,3 +374,20 @@ def get_rank(request):
     rank_detail = {'rank': count}
     return restful.result(message="获取数据成功", data=rank_detail)
 
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def get_top20_rank(request):
+    top20_rank = User.objects.order_by('-UserCount')[:20]
+    data = {'top20_rank': []}
+
+    for user_data in top20_rank.values():
+        print(user_data)
+        obj = {
+            "nickname": user_data['nickname'],
+            "UserCount": user_data['UserCount'],
+            "cityValue": user_data['cityValue'],
+        }
+        data['top20_rank'].append(obj)
+
+    return restful.result(message="获取数据成功", data=data)
