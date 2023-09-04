@@ -13,7 +13,7 @@ class User(models.Model):
     HardLevelStep = models.CharField(max_length=200, default="", null=True, blank=True)  # 用户关卡
     cityValue = models.CharField(max_length=200, default="", null=True, blank=True)  # 用户关卡
     genderValue = models.CharField(max_length=200, default="", null=True, blank=True)  # 用户关卡
-    createTime = models.DateTimeField(default=timezone.now)
+    createTime = models.DateTimeField(auto_now_add=True)
     objects = models.Manager()  # 的管理器
 
     def __str__(self):

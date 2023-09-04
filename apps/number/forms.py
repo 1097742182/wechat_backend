@@ -5,7 +5,7 @@ from .models import User
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        exclude = []
+        exclude = ["createTime"]
 
     def clean_nickname(self):
         nickname = self.cleaned_data.get('nickname')
@@ -32,7 +32,7 @@ class UpdateUserForm(forms.ModelForm):
 
     class Meta:
         model = User
-        exclude = ["openId"]
+        exclude = ["openId", "createTime"]
 
 
 class UpdateUserCountForm(forms.Form):
