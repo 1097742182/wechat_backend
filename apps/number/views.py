@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.core.files.storage import FileSystemStorage
 from .forms import UserForm, UpdateUserForm, UpdateUserCountForm
 from .models import User, UserPkHistory
-from utils import restful
+from utils import restful, waitRoom
 from django.db.models import Q, Count
 from django.db import models
 from django.db.models.functions import Cast
@@ -17,8 +17,17 @@ import time
 import redis
 import random
 
+r = redis.Redis(host="127.0.0.1", port=6379)
+
 appid = "wx9e48b38eda513483"
 secret = "7c01f44918662846de2e11217cadbc91"
+
+
+# 获取随机id
+def getId():
+    roomId = str(random.random())
+    roomId = roomId.split(".")[1]
+    return roomId
 
 
 def get_user_info_by_openId(access_token, openid):
@@ -236,9 +245,6 @@ def update_user_pk_history(request):
     return restful.result(message="用户PK数据修改成功")
 
 
-r = redis.Redis(host="127.0.0.1", port=6379)
-
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def createRoom(request):
@@ -392,26 +398,112 @@ def get_top20_rank(request):
     return restful.result(message="获取数据成功", data=data)
 
 
-
+@csrf_exempt
+@require_http_methods(["POST"])
 def getWaitingRoom(request):
     username = request.POST.get("username")
     openId = request.POST.get("openId")
     waitingRoomId = request.POST.get("waitingRoomId")
 
+    # 用户信息为必传
+    if not username: return restful.params_error(message="请传入用户名")
+    if not openId: return restful.params_error(message="请传入openID")
+
+    # 如果有房间ID，则查询房间ID
     if waitingRoomId:
         waitingRoomDetail = r.get(waitingRoomId)
-        if not waitingRoomDetail: return restful.params_error("查找房间失败")
+        if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
 
-        waitingRoomDetail["secondUser"] = {"username": username, "openId": openId}
-        r.set(waitingRoomId, waitingRoomDetail)
-        return restful.data(data=waitingRoomDetail)
-    
+        waitingRoomDetail = eval(waitingRoomDetail)
+        firstUser = waitingRoomDetail["firstUser"]
+        secondUser = waitingRoomDetail["secondUser"]
+
+        # 如果房间人数已满，则直接返回
+        if firstUser["username"] and secondUser["username"]: return restful.params_error(message="房间已满，请重新创建")
+
+        # 如果用户已经在房间内，则直接返回
+        if firstUser["openId"] == openId or secondUser["openId"] == openId:
+            return restful.params_error(message="您已经在房间内")
+
+        # 如果firstUser为空，则赋值firstUser，否则赋值secondUser
+        userDetail = {"username": username, "openId": openId}
+        if not firstUser["username"]:
+            waitingRoomDetail["firstUser"] = waitRoom.getWaitingRoomUserDetail(userDetail)
+        else:
+            waitingRoomDetail["secondUser"] = waitRoom.getWaitingRoomUserDetail(userDetail)
+
+        # 如果没有房主，则直接返回
+        if not waitingRoomDetail["roomLeader"]: waitingRoomDetail["roomLeader"] = openId
+
+        r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
+        return restful.result(data=waitingRoomDetail)
+
+    # 如果没有传入roomId，则直接创建一个房间，并返回
     if not waitingRoomId:
-        return_data = {"waitingRoomId": "waitingRoom_id_" + getId(), "roomLeader": username,
-        "firstUser": {"username": username, "openId": openId},
-        "secondUser": {"username": "", "openId": ""},
+        waitingRoomId = "waitingRoom_id_" + getId()
+        firstUser = waitRoom.getWaitingRoomUserDetail({"username": username, "openId": openId})
+        secondUser = waitRoom.getWaitingRoomUserDetail({"username": "", "openId": ""})
+
+        return_data = {
+            "waitingRoomId": waitingRoomId,
+            "roomLeader": openId,
+            "firstUser": firstUser,
+            "secondUser": secondUser,
         }
 
-        r.set(waitingRoomId, return_data)
+        r.set(waitingRoomId, str(return_data), ex=604800)
+        return restful.result(data=return_data)
 
-        return restful.ok(data=return_data)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def quitWaitingRoom(request):
+    openId = request.POST.get("openId")
+    waitingRoomId = request.POST.get("waitingRoomId")
+
+    # 用户信息为必传
+    if not waitingRoomId: return restful.params_error(message="房间ID为必传")
+    if not openId: return restful.params_error(message="请传入openID")
+
+    waitingRoomDetail = r.get(waitingRoomId)
+    if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
+
+    # 获取用户详情
+    waitingRoomDetail = eval(waitingRoomDetail)
+    firstUser = waitingRoomDetail["firstUser"]
+    secondUser = waitingRoomDetail["secondUser"]
+    roomLeader = waitingRoomDetail["roomLeader"]
+
+    # 如果用户退出房间，则删除对应的用户信息
+    if firstUser["openId"] == openId:
+        waitingRoomDetail["firstUser"] = waitRoom.getWaitingRoomUserDetail({"username": "", "openId": ""})
+    elif secondUser["openId"] == openId:
+        waitingRoomDetail["secondUser"] = waitRoom.getWaitingRoomUserDetail({"username": "", "openId": ""})
+
+    # 如果退出房间的为房主，则将另一个人归类为房主
+    if roomLeader == openId:
+        if firstUser["openId"]:
+            waitingRoomDetail["roomLeader"] = firstUser["openId"]
+        elif secondUser["openId"]:
+            waitingRoomDetail["roomLeader"] = secondUser["openId"]
+        else:
+            waitingRoomDetail["roomLeader"] = ""
+
+    # 保存到redis，并返回数据
+    r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
+    return restful.result(data=waitingRoomDetail)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def checkWaitingRoom(request):
+    waitingRoomId = request.POST.get("waitingRoomId")
+
+    # 用户信息为必传
+    if not waitingRoomId: return restful.params_error(message="房间ID为必传")
+
+    waitingRoomDetail = r.get(waitingRoomId)
+    if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
+
+    # 获取用户详情
+    waitingRoomDetail = eval(waitingRoomDetail)
+    return restful.result(data=waitingRoomDetail)
