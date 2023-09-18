@@ -390,3 +390,28 @@ def get_top20_rank(request):
         data.append(obj)
 
     return restful.result(message="获取数据成功", data=data)
+
+
+
+def getWaitingRoom(request):
+    username = request.POST.get("username")
+    openId = request.POST.get("openId")
+    waitingRoomId = request.POST.get("waitingRoomId")
+
+    if waitingRoomId:
+        waitingRoomDetail = r.get(waitingRoomId)
+        if not waitingRoomDetail: return restful.params_error("查找房间失败")
+
+        waitingRoomDetail["secondUser"] = {"username": username, "openId": openId}
+        r.set(waitingRoomId, waitingRoomDetail)
+        return restful.data(data=waitingRoomDetail)
+    
+    if not waitingRoomId:
+        return_data = {"waitingRoomId": "waitingRoom_id_" + getId(), "roomLeader": username,
+        "firstUser": {"username": username, "openId": openId},
+        "secondUser": {"username": "", "openId": ""},
+        }
+
+        r.set(waitingRoomId, return_data)
+
+        return restful.ok(data=return_data)
