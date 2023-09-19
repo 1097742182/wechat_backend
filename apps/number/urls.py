@@ -17,6 +17,7 @@ urlpatterns = [
     path('getWaitingRoom', views.getWaitingRoom, name='getWaitingRoom'),
     path('quitWaitingRoom', views.quitWaitingRoom, name='quitWaitingRoom'),
     path('checkWaitingRoom', views.checkWaitingRoom, name='checkWaitingRoom'),
+    path('updateWaitingRoom', views.updateWaitingRoom, name='updateWaitingRoom'),
 
     path('update_user_pk_history', views.update_user_pk_history, name='update_user_pk_history'),
     path('createRoom', views.createRoom, name='createRoom'),

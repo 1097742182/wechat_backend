@@ -446,7 +446,8 @@ def getWaitingRoom(request):
 
         return_data = {
             "waitingRoomId": waitingRoomId,
-            "roomLeader": openId,
+            "roomLeader": openId,  # 房主
+            "gameBeginStatus": False,  # 游戏开始状态，默认为False
             "firstUser": firstUser,
             "secondUser": secondUser,
         }
@@ -493,6 +494,7 @@ def quitWaitingRoom(request):
     r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
     return restful.result(data=waitingRoomDetail)
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def checkWaitingRoom(request):
@@ -506,4 +508,36 @@ def checkWaitingRoom(request):
 
     # 获取用户详情
     waitingRoomDetail = eval(waitingRoomDetail)
+    return restful.result(data=waitingRoomDetail)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def updateWaitingRoom(request):
+    openId = request.POST.get("openId")
+    waitingRoomId = request.POST.get("waitingRoomId")
+
+    # 用户信息为必传
+    if not waitingRoomId: return restful.params_error(message="房间ID为必传")
+    if not openId: return restful.params_error(message="请传入openID")
+
+    waitingRoomDetail = r.get(waitingRoomId)
+    if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
+
+    # 获取用户详情
+    waitingRoomDetail = eval(waitingRoomDetail)
+    firstUser = waitingRoomDetail["firstUser"]
+    secondUser = waitingRoomDetail["secondUser"]
+    roomLeader = waitingRoomDetail["roomLeader"]
+
+    # 如果查找到对应用户，则修改状态
+    if firstUser["openId"] == openId:
+        waitingRoomDetail["firstUser"]["status"] = True
+    elif secondUser["openId"] == openId:
+        waitingRoomDetail["secondUser"]["status"] = True
+    else:
+        return restful.params_error(message="未查询到指定用户")
+
+    # 保存到redis，并返回数据
+    r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
     return restful.result(data=waitingRoomDetail)
