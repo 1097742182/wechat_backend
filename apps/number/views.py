@@ -446,7 +446,8 @@ def getWaitingRoom(request):
 
         return_data = {
             "waitingRoomId": waitingRoomId,
-            "roomLeader": openId,
+            "roomLeader": openId,  # 房主
+            "gameBeginStatus": False,  # 游戏开始状态，默认为False
             "firstUser": firstUser,
             "secondUser": secondUser,
         }
