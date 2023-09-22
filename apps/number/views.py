@@ -566,20 +566,19 @@ def getPkRoomFromWaitingRoom(request):
     if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
 
     # 检查用户数据是否可用
-    if True: 
+    if True:
         # 获取用户详情
         waitingRoomDetail = eval(waitingRoomDetail)
         firstUser = waitingRoomDetail["firstUser"]
         secondUser = waitingRoomDetail["secondUser"]
 
         # 如果用户信息为空，说明房间人数不满
-        if not firstUser["username"] : return restful.params_error(message="请等待用户进入房间")
-        if not secondUser["username"] : return restful.params_error(message="请等待用户进入房间")
+        if not firstUser["username"]: return restful.params_error(message="请等待用户进入房间")
+        if not secondUser["username"]: return restful.params_error(message="请等待用户进入房间")
 
         # 如果用户还没准备，直接返回
         if not firstUser["status"]: return restful.params_error(message="用户尚未准备")
         if not secondUser["status"]: return restful.params_error(message="用户尚未准备")
-
 
     room_detail = {}  # 返回数据
 
@@ -652,12 +651,12 @@ def updatePkRoomDetail(request):
         if step: secondUser["step"] = step
         if useTime: secondUser["useTime"] = useTime
         if gameStatus: secondUser["gameStatus"] = gameStatus
-        if gameIsOver: firstUser["gameIsOver"] = gameIsOver
+        if gameIsOver: secondUser["gameIsOver"] = gameIsOver
 
-    else: # 否则查询用户失败
+    else:  # 否则查询用户失败
         return restful.params_error(message="查询用户失败")
 
-    room_detail = waitRoom.checkGameStatus(room_detail) # 查询游戏是否已经结束
+    room_detail = waitRoom.checkGameStatus(room_detail)  # 查询游戏是否已经结束
 
     r.set(room_detail["roomId"], str(room_detail), ex=604800)
     return restful.result(message="更新数据成功", data=room_detail)
