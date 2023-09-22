@@ -493,6 +493,7 @@ def quitWaitingRoom(request):
     r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
     return restful.result(data=waitingRoomDetail)
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def checkWaitingRoom(request):
@@ -507,3 +508,155 @@ def checkWaitingRoom(request):
     # 获取用户详情
     waitingRoomDetail = eval(waitingRoomDetail)
     return restful.result(data=waitingRoomDetail)
+
+
+# 更新waitingRoom用户状态
+@csrf_exempt
+@require_http_methods(["POST"])
+def updateWaitingRoom(request):
+    waitingRoomId = request.POST.get("waitingRoomId")
+    username = request.POST.get("username")
+    openId = request.POST.get("openId")
+    status = request.POST.get("status")
+
+    # 用户信息为必传
+    if not waitingRoomId: return restful.params_error(message="房间ID为必传")
+    if not username: return restful.params_error(message="username为必传")
+    if not openId: return restful.params_error(message="openId为必传")
+    if not status: return restful.params_error(message="status为必传")
+
+    waitingRoomDetail = r.get(waitingRoomId)
+    if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
+
+    # 获取用户详情
+    waitingRoomDetail = eval(waitingRoomDetail)
+    firstUser = waitingRoomDetail["firstUser"]
+    secondUser = waitingRoomDetail["secondUser"]
+
+    if firstUser["openId"] == openId: firstUser["status"] = status
+    if secondUser["openId"] == openId: secondUser["status"] = status
+
+    r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
+    return restful.result(data=waitingRoomDetail)
+
+
+# 根据waitingRoom的ID获取比赛详情
+@csrf_exempt
+@require_http_methods(["POST"])
+def getPkRoomFromWaitingRoom(request):
+    waitingRoomId = request.POST.get("waitingRoomId")
+    username = request.POST.get("username")
+    openId = request.POST.get("openId")
+
+    # 用户信息为必传
+    if not waitingRoomId: return restful.params_error(message="房间ID为必传")
+    if not username: return restful.params_error(message="username为必传")
+    if not openId: return restful.params_error(message="openId为必传")
+
+    # 将对应的ID转换成waitingBeginRoomID，并尝试从redis获取数据
+    waitingBeginRoomId = waitingRoomId.replace("waitingRoom_id_", "waitingBeginRoom_id_")
+    waitingBeginRoomDetail = r.get(waitingBeginRoomId)
+
+    # ** 如果查询到房间对战详情，则直接返回
+    if waitingBeginRoomDetail:  return restful.result(data=eval(waitingBeginRoomDetail))
+
+    # ** 如果查询不到房间，则开始创建房间详情
+    waitingRoomDetail = r.get(waitingRoomId)
+    if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
+
+    # 检查用户数据是否可用
+    if True: 
+        # 获取用户详情
+        waitingRoomDetail = eval(waitingRoomDetail)
+        firstUser = waitingRoomDetail["firstUser"]
+        secondUser = waitingRoomDetail["secondUser"]
+
+        # 如果用户信息为空，说明房间人数不满
+        if not firstUser["username"] : return restful.params_error(message="请等待用户进入房间")
+        if not secondUser["username"] : return restful.params_error(message="请等待用户进入房间")
+
+        # 如果用户还没准备，直接返回
+        if not firstUser["status"]: return restful.params_error(message="用户尚未准备")
+        if not secondUser["status"]: return restful.params_error(message="用户尚未准备")
+
+
+    room_detail = {}  # 返回数据
+
+    # 丰富返回信息
+    room_detail["beginTime"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    room_detail["roomId"] = "room_id_" + getId()
+
+    # firstUser用户信息
+    firstUserDetail = {}
+    firstUserDetail["username"] = firstUser["username"]
+    firstUserDetail["openId"] = firstUser["openId"]
+    firstUserDetail["useTime"] = ""
+    firstUserDetail["step"] = 0
+    firstUserDetail["gameStatus"] = False
+    firstUserDetail["gameIsOver"] = False
+    room_detail["firstUser"] = firstUserDetail
+
+    # secondUser用户信息
+    secondUserDetail = {}
+    secondUserDetail["username"] = secondUser["username"]
+    secondUserDetail["openId"] = secondUser["openId"]
+    secondUserDetail["useTime"] = ""
+    secondUserDetail["step"] = 0
+    secondUserDetail["gameStatus"] = False
+    secondUserDetail["gameIsOver"] = False
+    room_detail["secondUser"] = secondUserDetail
+
+    room_detail["gameStatus"] = "loading"
+    room_detail["winner"] = ""
+
+    r.set(waitingBeginRoomId, str(room_detail), ex=604800)
+    r.set(room_detail["roomId"], str(room_detail), ex=604800)
+    return restful.result(message="进入房间成功", data=room_detail)
+
+
+# 更新PK房间用户详情
+@csrf_exempt
+@require_http_methods(["POST"])
+def updatePkRoomDetail(request):
+    roomId = request.POST.get("roomId")
+    username = request.POST.get("username")
+    openId = request.POST.get("openId")
+    step = request.POST.get("step")
+    useTime = request.POST.get("useTime")
+    gameStatus = request.POST.get("gameStatus")
+    gameIsOver = request.POST.get("gameIsOver")
+
+    # 用户信息为必传
+    if not roomId: return restful.params_error(message="roomId为必传")
+    if not username: return restful.params_error(message="username为必传")
+    if not openId: return restful.params_error(message="openId为必传")
+
+    room_detail = r.get(roomId)
+    if not room_detail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
+
+    # 获取用户信息
+    room_detail = eval(room_detail)
+    firstUser = room_detail["firstUser"]
+    secondUser = room_detail["secondUser"]
+
+    # 如果传入的用户是firstUser
+    if firstUser["openId"] == openId:
+        if step: firstUser["step"] = step
+        if useTime: firstUser["useTime"] = useTime
+        if gameStatus: firstUser["gameStatus"] = gameStatus
+        if gameIsOver: firstUser["gameIsOver"] = gameIsOver
+
+    # 如果传入的用户为secondUser
+    elif secondUser["openId"] == openId:
+        if step: secondUser["step"] = step
+        if useTime: secondUser["useTime"] = useTime
+        if gameStatus: secondUser["gameStatus"] = gameStatus
+        if gameIsOver: firstUser["gameIsOver"] = gameIsOver
+
+    else: # 否则查询用户失败
+        return restful.params_error(message="查询用户失败")
+
+    room_detail = waitRoom.checkGameStatus(room_detail) # 查询游戏是否已经结束
+
+    r.set(room_detail["roomId"], str(room_detail), ex=604800)
+    return restful.result(message="更新数据成功", data=room_detail)
