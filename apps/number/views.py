@@ -432,7 +432,7 @@ def getWaitingRoom(request):
         else:
             waitingRoomDetail["secondUser"] = waitRoom.getWaitingRoomUserDetail(userDetail)
 
-        # 如果没有房主，则直接返回
+        # 如果没有房主，则当前用户为房主
         if not waitingRoomDetail["roomLeader"]: waitingRoomDetail["roomLeader"] = openId
 
         r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
@@ -534,8 +534,8 @@ def updateWaitingRoom(request):
     firstUser = waitingRoomDetail["firstUser"]
     secondUser = waitingRoomDetail["secondUser"]
 
-    if firstUser["openId"] == openId: firstUser["status"] = status
-    if secondUser["openId"] == openId: secondUser["status"] = status
+    if firstUser["openId"] == openId and status: firstUser["status"] = True
+    if secondUser["openId"] == openId and status: secondUser["status"] = True
 
     r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
     return restful.result(data=waitingRoomDetail)
