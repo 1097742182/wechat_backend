@@ -272,7 +272,9 @@ def createRoom(request):
 @require_http_methods(["POST"])
 def getRoomDetail(request):
     roomId = request.POST.get("roomId")
-    room_id = "room_id_" + roomId
+    if (roomId.find("room_id") == -1): roomId = "room_id_" + roomId
+
+    room_id = roomId
     room_detail = r.get(room_id)
     if not room_detail:
         return restful.params_error(message="房间号有误！")
@@ -609,6 +611,11 @@ def getPkRoomFromWaitingRoom(request):
     room_detail["gameStatus"] = "loading"
     room_detail["winner"] = ""
 
+    # 需要更新gameBeginStatus
+    waitingRoomDetail['gameBeginStatus'] = True
+    r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
+
+    # 创建两个房间的PKroom内容，虽然都是一样的，但是需要两个
     r.set(waitingBeginRoomId, str(room_detail), ex=604800)
     r.set(room_detail["roomId"], str(room_detail), ex=604800)
     return restful.result(message="进入房间成功", data=room_detail)
