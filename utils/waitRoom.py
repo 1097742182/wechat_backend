@@ -1,3 +1,6 @@
+import random
+
+
 def getWaitingRoomUserDetail(userDetail):
     username = userDetail["username"]
     openId = userDetail["openId"]
@@ -23,7 +26,18 @@ def checkGameStatus(room_detail):
     # 判断用户的步数，判断谁胜利
     firstStep = int(firstUser["step"])
     secondStep = int(secondUser["step"])
-    if firstStep>secondStep: room_detail["winner"] = secondUser['openId']
-    elif firstStep<secondStep: room_detail["winner"] = firstUser['openId']
+    if firstStep > secondStep:
+        room_detail["winner"] = secondUser['openId']
+    elif firstStep < secondStep:
+        room_detail["winner"] = firstUser['openId']
 
     return room_detail
+
+
+def getSecretNumbers(number):
+    secretList = []
+    while len(secretList) < number:
+        secretNum = random.randint(0, 9)
+        if secretNum not in secretList:
+            secretList.append(secretNum)
+    return secretList

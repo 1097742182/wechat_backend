@@ -587,6 +587,7 @@ def getPkRoomFromWaitingRoom(request):
     # 丰富返回信息
     room_detail["beginTime"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     room_detail["roomId"] = "room_id_" + getId()
+    room_detail["secretNumbers"] = waitRoom.getSecretNumbers(4)
 
     # firstUser用户信息
     firstUserDetail = {}
