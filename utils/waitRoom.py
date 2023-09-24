@@ -36,8 +36,14 @@ def checkGameStatus(room_detail):
 
 def getSecretNumbers(number):
     secretList = []
+
     while len(secretList) < number:
         secretNum = random.randint(0, 9)
         if secretNum not in secretList:
             secretList.append(secretNum)
-    return secretList
+
+    returnList = []
+    for item in secretList:
+        returnList.append(str(item))
+
+    return returnList
