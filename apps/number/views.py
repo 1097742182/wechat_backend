@@ -20,7 +20,7 @@ import random
 r = redis.Redis(host="127.0.0.1", port=6379)
 
 appid = "wxe16b90637ea98dcb"
-secret = "7c01f44918662846de2e11217cadbc91"
+secret = "ef084f49d04e38dbec0630c62eaf68c9"
 
 
 # 获取随机id
