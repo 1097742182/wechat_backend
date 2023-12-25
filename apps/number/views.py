@@ -272,7 +272,9 @@ def createRoom(request):
 @require_http_methods(["POST"])
 def getRoomDetail(request):
     roomId = request.POST.get("roomId")
-    room_id = "room_id_" + roomId
+    if (roomId.find("room_id") == -1): roomId = "room_id_" + roomId
+
+    room_id = roomId
     room_detail = r.get(room_id)
     if not room_detail:
         return restful.params_error(message="房间号有误！")
@@ -432,7 +434,7 @@ def getWaitingRoom(request):
         else:
             waitingRoomDetail["secondUser"] = waitRoom.getWaitingRoomUserDetail(userDetail)
 
-        # 如果没有房主，则直接返回
+        # 如果没有房主，则当前用户为房主
         if not waitingRoomDetail["roomLeader"]: waitingRoomDetail["roomLeader"] = openId
 
         r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
@@ -534,8 +536,8 @@ def updateWaitingRoom(request):
     firstUser = waitingRoomDetail["firstUser"]
     secondUser = waitingRoomDetail["secondUser"]
 
-    if firstUser["openId"] == openId: firstUser["status"] = status
-    if secondUser["openId"] == openId: secondUser["status"] = status
+    if firstUser["openId"] == openId and status: firstUser["status"] = True
+    if secondUser["openId"] == openId and status: secondUser["status"] = True
 
     r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
     return restful.result(data=waitingRoomDetail)
@@ -566,26 +568,26 @@ def getPkRoomFromWaitingRoom(request):
     if not waitingRoomDetail: return restful.params_error(message="查找房间失败")  # 如果没有查询到房间号，则直接返回
 
     # 检查用户数据是否可用
-    if True: 
+    if True:
         # 获取用户详情
         waitingRoomDetail = eval(waitingRoomDetail)
         firstUser = waitingRoomDetail["firstUser"]
         secondUser = waitingRoomDetail["secondUser"]
 
         # 如果用户信息为空，说明房间人数不满
-        if not firstUser["username"] : return restful.params_error(message="请等待用户进入房间")
-        if not secondUser["username"] : return restful.params_error(message="请等待用户进入房间")
+        if not firstUser["username"]: return restful.params_error(message="请等待用户进入房间")
+        if not secondUser["username"]: return restful.params_error(message="请等待用户进入房间")
 
         # 如果用户还没准备，直接返回
         if not firstUser["status"]: return restful.params_error(message="用户尚未准备")
         if not secondUser["status"]: return restful.params_error(message="用户尚未准备")
-
 
     room_detail = {}  # 返回数据
 
     # 丰富返回信息
     room_detail["beginTime"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     room_detail["roomId"] = "room_id_" + getId()
+    room_detail["secretNumbers"] = waitRoom.getSecretNumbers(4)
 
     # firstUser用户信息
     firstUserDetail = {}
@@ -610,6 +612,11 @@ def getPkRoomFromWaitingRoom(request):
     room_detail["gameStatus"] = "loading"
     room_detail["winner"] = ""
 
+    # 需要更新gameBeginStatus
+    waitingRoomDetail['gameBeginStatus'] = True
+    r.set(waitingRoomId, str(waitingRoomDetail), ex=604800)
+
+    # 创建两个房间的PKroom内容，虽然都是一样的，但是需要两个
     r.set(waitingBeginRoomId, str(room_detail), ex=604800)
     r.set(room_detail["roomId"], str(room_detail), ex=604800)
     return restful.result(message="进入房间成功", data=room_detail)
@@ -652,12 +659,12 @@ def updatePkRoomDetail(request):
         if step: secondUser["step"] = step
         if useTime: secondUser["useTime"] = useTime
         if gameStatus: secondUser["gameStatus"] = gameStatus
-        if gameIsOver: firstUser["gameIsOver"] = gameIsOver
+        if gameIsOver: secondUser["gameIsOver"] = gameIsOver
 
-    else: # 否则查询用户失败
+    else:  # 否则查询用户失败
         return restful.params_error(message="查询用户失败")
 
-    room_detail = waitRoom.checkGameStatus(room_detail) # 查询游戏是否已经结束
+    room_detail = waitRoom.checkGameStatus(room_detail)  # 查询游戏是否已经结束
 
     r.set(room_detail["roomId"], str(room_detail), ex=604800)
     return restful.result(message="更新数据成功", data=room_detail)
