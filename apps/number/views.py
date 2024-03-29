@@ -39,7 +39,15 @@ def get_user_info_by_openId(access_token, openid):
 
 
 # 获取微信用户openid
-def get_wx_openid(js_code):
+def get_wx_openid(js_code, type="passwordDetective"):
+    # 根据传入的type，判断是哪个小程序
+    if type == "guessFourNumber":
+        appid = "wx9e48b38eda513483"
+        secret = "7c01f44918662846de2e11217cadbc91"
+    else:
+        appid = "wxe16b90637ea98dcb"
+        secret = "ef084f49d04e38dbec0630c62eaf68c9"
+
     url = 'https://api.weixin.qq.com/sns/jscode2session'
     params = {
         'appid': appid,
@@ -98,13 +106,13 @@ def _get_user_info_by_wx_url(openid):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def get_user_info(request):
+def get_user_info(request, type):
     code = request.POST.get('code')
     openid = request.POST.get('openid')
 
     if not openid:
         # 根据wx.login获取的临时code，获取openid
-        wx_response = get_wx_openid(code)
+        wx_response = get_wx_openid(code, type)
         openid = wx_response.get("openid")
 
     print("openid", openid)
