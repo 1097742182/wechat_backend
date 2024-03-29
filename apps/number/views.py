@@ -106,11 +106,13 @@ def _get_user_info_by_wx_url(openid):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def get_user_info(request, type):
-    if not type:
-        type = "passwordDetective"
+def get_user_info(request):
     code = request.POST.get('code')
     openid = request.POST.get('openid')
+    type = request.POST.get("type")
+
+    if not type:
+        type = "passwordDetective"
 
     if not openid:
         # 根据wx.login获取的临时code，获取openid
