@@ -55,6 +55,7 @@ def get_wx_openid(js_code, type="passwordDetective"):
         'js_code': js_code,
         'grant_type': 'authorization_code'
     }
+    print(params)
     response = requests.get(url, params=params)
     if response.status_code == 200:
         return response.json()
